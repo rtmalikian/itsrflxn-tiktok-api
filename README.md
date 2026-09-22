@@ -140,6 +140,45 @@ the TikTok developer portal.
 
 ---
 
+## 2b. tiktok_compose.py — interactive demo flow (for App Review)
+
+`tiktok-uploader/tiktok_compose.py` is a small, TikTok-only companion that
+walks through the exact flow TikTok's reviewers ask to see on screen for the
+Content Posting API demo video:
+
+1. **Login Kit** OAuth — `user.info.basic` + `video.publish`, local callback on
+   port 8699.
+2. **Creator Info query** — prints the account and *only* its allowed privacy
+   options.
+3. **Compose prompts** — privacy level (no default), comment/duet/stitch toggles
+   (off by default, honouring account settings), editable RFLXN caption preview,
+   and explicit commercial-disclosure questions.
+4. **Consent** — "By posting, you agree to TikTok's Music Usage Confirmation".
+5. **Publish** — `FILE_UPLOAD` upload with status polling to `PUBLISH_COMPLETE`.
+
+### Recording the demo video
+
+TikTok's review form accepts mp4/mov files, **up to 50 MB each**. Use two small
+files, not one big one:
+
+- **Test clip you post** — a short, low-bitrate mp4 (1–5 MB) so upload + polling
+  finish fast and the recording stays short.
+- **Screen recording** — ~1–2 minutes at 720p (macOS `Cmd+Shift+5`) showing:
+  1. Opening `https://rtmalikian.github.io/itsrflxn-tiktok-api/` (the demo
+     domain must match the Website URL submitted to TikTok).
+  2. `python3 tiktok_compose.py --tiktok-auth` → the sandbox OAuth page → approve
+     the scopes → redirect back to `localhost:8699/callback/`.
+  3. `python3 tiktok_compose.py --video test_clip.mp4` → privacy selection,
+     toggles, caption preview, consent, publish.
+  4. Status polling reaching `PUBLISH_COMPLETE`, then the post visible in the
+     TikTok app (private / `SELF_ONLY` for an unaudited app).
+
+Sandbox note: sandbox mode does not offer Content Posting for **public** videos,
+so demonstrate with `SELF_ONLY` and explain that `PUBLIC_TO_EVERYONE` is enabled
+after approval.
+
+---
+
 ## 3. Repository layout
 
 ```
@@ -148,6 +187,7 @@ the TikTok developer portal.
 ├── terms-of-service/index.html    # Terms of Service
 ├── privacy-policy/index.html      # Privacy Policy
 ├── tiktok-uploader/gen_rflxn.py   # Generator + TikTok posting bot
+├── tiktok-uploader/tiktok_compose.py  # Interactive demo flow (App Review)
 ├── tiktok<TOKEN>.txt              # Site-verification signature file
 └── README.md
 ```
