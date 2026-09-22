@@ -228,7 +228,7 @@ TIKTOK_HASHTAGS = [
 # after running `--tiktok-auth` once, they are persisted to a credentials file.
 TIKTOK_CLIENT_KEY = os.environ.get("TIKTOK_CLIENT_KEY", "")
 TIKTOK_CLIENT_SECRET = os.environ.get("TIKTOK_CLIENT_SECRET", "")
-TIKTOK_REDIRECT_URI = os.environ.get("TIKTOK_REDIRECT_URI", "http://localhost:8699")
+TIKTOK_REDIRECT_URI = os.environ.get("TIKTOK_REDIRECT_URI", "http://localhost:8699/callback/")
 TIKTOK_SCOPES = "user.info.basic,video.publish"
 CREDENTIALS_FILE = Path.home() / ".itsrflxn_tiktok.json"
 
@@ -1912,12 +1912,12 @@ def authorize_tiktok() -> dict:
     code = None
     if redirect_uri.startswith(("http://localhost:", "http://127.0.0.1:")):
         # We can receive the redirect locally — try the loopback server.
-        if "TIKTOK_REDIRECT_URI" in os.environ:
-            port = int(redirect_uri.rsplit(":", 1)[1])
-            code = _capture_local_callback_code(port, state)
+        m = re.search(r":(\d+)", redirect_uri)
+        if m:
+            code = _capture_local_callback_code(int(m.group(1)), state)
             if code is None:
-                print("[error] No local callback received. Ensure the redirect URI is "
-                      "registered in the TikTok developer portal and re-run.")
+                print("[error] No local callback received — check the redirect URI "
+                      "registered in the TikTok developer portal.")
     if code is None and not redirect_uri.startswith(("http://localhost:", "http://127.0.0.1:")):
         code = click.prompt("Paste the `code` parameter from the redirected URL")
 
