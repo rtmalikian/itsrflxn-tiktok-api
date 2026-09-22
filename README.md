@@ -63,7 +63,8 @@ pip install faster-whisper click questionary requests
 # 2. Credentials — either export them or let the flow prompt
 export TIKTOK_CLIENT_KEY="..."
 export TIKTOK_CLIENT_SECRET="..."
-export TIKTOK_REDIRECT_URI="http://localhost:8699"   # must match the portal
+# Optional — defaults to the registered web redirect below
+export TIKTOK_REDIRECT_URI="http://localhost:8699/callback/"
 
 # 3. Authorise your TikTok account (runs the OAuth flow, saves ~/.itsrflxn_tiktok.json)
 python3 tiktok-uploader/gen_rflxn.py --tiktok-auth
@@ -156,6 +157,20 @@ Content Posting API demo video:
 4. **Consent** — "By posting, you agree to TikTok's Music Usage Confirmation".
 5. **Publish** — `FILE_UPLOAD` upload with status polling to `PUBLISH_COMPLETE`.
 
+### Redirect URIs registered in the portal
+
+TikTok requires a **web redirect URI** (a real https domain) before review —
+`localhost` alone is rejected with *"App must have web redirect uri or trusted
+domain"*. This repo provides both:
+
+| Category | URI | Path in repo | What it does |
+| --- | --- | --- | --- |
+| Web (Desktop) | `https://rtmalikian.github.io/itsrflxn-tiktok-api/callback/` | `callback/index.html` | Required for review. JS page forwards `code`+`state` to `http://localhost:8699/callback/`. |
+| Web (Desktop) | `http://localhost:8699/callback/` | — | Direct loopback flow, useful while developing. |
+
+Register both under **Login Kit → Redirect URIs**. The scripts always run the
+loopback listener, so the GitHub Pages forward lands on it automatically.
+
 ### Recording the demo video
 
 TikTok's review form accepts mp4/mov files, **up to 50 MB each**. Use two small
@@ -186,6 +201,7 @@ after approval.
 ├── index.html                     # Landing page (links to both legal pages)
 ├── terms-of-service/index.html    # Terms of Service
 ├── privacy-policy/index.html      # Privacy Policy
+├── callback/index.html            # OAuth web redirect → local loopback bounce
 ├── tiktok-uploader/gen_rflxn.py   # Generator + TikTok posting bot
 ├── tiktok-uploader/tiktok_compose.py  # Interactive demo flow (App Review)
 ├── tiktok<TOKEN>.txt              # Site-verification signature file

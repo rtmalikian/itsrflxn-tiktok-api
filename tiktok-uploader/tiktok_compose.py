@@ -91,7 +91,13 @@ CREDENTIALS_FILE = Path.home() / ".itsrflxn_tiktok.json"
 
 TIKTOK_CLIENT_KEY = os.environ.get("TIKTOK_CLIENT_KEY", "")
 TIKTOK_CLIENT_SECRET = os.environ.get("TIKTOK_CLIENT_SECRET", "")
-TIKTOK_REDIRECT_URI = os.environ.get("TIKTOK_REDIRECT_URI", "http://localhost:8699/callback/")
+# Web redirect registered in the TikTok portal (required for review): the
+# GitHub Pages callback page forwards the code to the local loopback listener
+# on port 8699. Both must be registered in the portal for the desktop flow.
+TIKTOK_REDIRECT_URI = os.environ.get(
+    "TIKTOK_REDIRECT_URI",
+    "https://rtmalikian.github.io/itsrflxn-tiktok-api/callback/",
+)
 TIKTOK_SCOPES = "user.info.basic,video.publish"
 
 TIKTOK_OAUTH_TOKEN_URL = "https://open.tiktokapis.com/v2/oauth/token/"
@@ -200,7 +206,14 @@ def _capture_local_callback_code(port: int, expected_state: str) -> str | None:
 
 
 def authorize_tiktok() -> dict:
-    """Run the TikTok authorisation-code flow and persist the tokens."""
+    """Run the TikTok authorisation-code flow and persist the tokens.
+
+    The loopback listener always runs: when the redirect URI is the
+    registered web URL (e.g. the GitHub Pages callback page), that page
+    forwards the code here; when the redirect URI is localhost directly,
+    the browser lands here first. If no callback arrives, fall back to
+    pasting the code from the redirected URL.
+    """
     client_key = TIKTOK_CLIENT_KEY or click.prompt("TikTok client key")
     client_secret = TIKTOK_CLIENT_SECRET or click.prompt("TikTok client secret", hide_input=True)
     redirect_uri = TIKTOK_REDIRECT_URI
@@ -213,15 +226,15 @@ def authorize_tiktok() -> dict:
     )
     print(f"\nOpen this URL in your browser and authorise the app:\n  {auth_url}\n")
 
+    m = re.search(r":(\d+)", redirect_uri)
+    port = int(m.group(1)) if m else 8699
+
     code = None
-    if redirect_uri.startswith(("http://localhost:", "http://127.0.0.1:")):
-        m = re.search(r":(\d+)", redirect_uri)
-        if m:
-            code = _capture_local_callback_code(int(m.group(1)), state)
-            if code is None:
-                print("[error] No local callback received — check the redirect URI "
-                      "registered in the TikTok developer portal.")
-    if code is None and not redirect_uri.startswith(("http://localhost:", "http://127.0.0.1:")):
+    try:
+        code = _capture_local_callback_code(port, state)
+    except OSError as e:
+        print(f"[error] Could not start the local callback server: {e}")
+    if code is None:
         code = click.prompt("Paste the `code` parameter from the redirected URL")
 
     if not code:

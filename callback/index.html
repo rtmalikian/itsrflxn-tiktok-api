@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>RFLXN — TikTok callback</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      line-height: 1.6;
+      margin: 0 auto;
+      max-width: 46rem;
+      padding: 3rem 1.5rem;
+      text-align: center;
+    }
+    a { color: #1a73e8; }
+    code {
+      background: #f1f3f4;
+      border-radius: 4px;
+      padding: 0.15em 0.4em;
+      word-break: break-all;
+    }
+  </style>
+</head>
+<body>
+  <h1>RFLXN — TikTok sign-in</h1>
+  <p>Connecting to the RFLXN publisher&hellip;</p>
+  <p>If nothing happens, copy the link below and open it on this computer:</p>
+  <p><a id="local-link" href="#">Open composer</a></p>
+  <p><code id="code-display"></code></p>
+  <script>
+    // GitHub Pages can't run a server-side redirect, so we forward the
+    // authorisation code to the app's local loopback listener (port 8699),
+    // which is what tiktok_compose.py / gen_rflxn.py wait on.
+    var params = new URLSearchParams(window.location.search);
+    var target = "http://localhost:8699/callback/?" + params.toString();
+    var link = document.getElementById("local-link");
+    link.href = target;
+    if (params.get("code")) {
+      document.getElementById("code-display").textContent = "code=" + params.get("code");
+      setTimeout(function () { window.location.replace(target); }, 1500);
+    }
+  </script>
+</body>
+</html>
